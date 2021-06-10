@@ -23,7 +23,7 @@ public class Player : MonoBehaviour {
         Cursor.lockState = CursorLockMode.Locked;
     }
     private void Update() {
-        isGrounded = Physics.CheckSphere(transform.position, 0.1f, Landable);
+        isGrounded = Physics.CheckSphere(transform.position, controller.radius/2, Landable);
         if(isGrounded && drop < 0) {
             drop = -2f;
         }
