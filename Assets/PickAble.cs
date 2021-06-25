@@ -5,29 +5,23 @@ using UnityEngine;
 public class PickAble : MonoBehaviour
 {
     public Telekinesis owner;
-    bool held;
+    public float Speed = 3f;
+    public bool held;
     public ParticleSystem particles;
-    public void PickUp(Telekinesis by) {
+    public Rigidbody rb;
+    private void Start() {
+        TryGetComponent<Rigidbody>(out rb);
+    }
+    public virtual void PickUp(Telekinesis by) {
         owner = by;
         if (owner) {
-            gameObject.layer = owner.gameObject.layer;
-            GetComponent<Rigidbody>().isKinematic = true;
-            Vector3 p = default;
-            if (Vector3.Distance(transform.position, owner.transform.position) > 10f) {
-                p = owner.transform.position + (transform.position-owner.transform.position).normalized * 10f;
-            }
-            else {
-                p = transform.position;
-            }
-            p += (Vector3.up * owner.GetComponent<CharacterController>().height * 3);
-            StartCoroutine(Lift(p));
+            if(rb) rb.isKinematic = true;
+            StartCoroutine(Lift());
         }
         else {
-            GetComponent<Rigidbody>().isKinematic = false;
-            gameObject.layer = 31;
+            if(rb) rb.isKinematic = false;
             held = false;
         }
-        GetComponent<MeshRenderer>().material.SetFloat("PickedUp", owner ? 1 : 0);
     }
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.layer == gameObject.layer || gameObject.layer == 31f || gameObject.layer == 3) {
@@ -38,20 +32,27 @@ public class PickAble : MonoBehaviour
         d.Attacker = owner.GetComponent<CharacterController>();
         d.value = rb.mass * rb.velocity.magnitude;
         collision.gameObject.SendMessage("TakeDamage", d,SendMessageOptions.DontRequireReceiver);
-        Instantiate<ParticleSystem>(particles, collision.GetContact(0).point, Quaternion.Euler(collision.GetContact(0).normal)).gameObject.SetActive(true);
+        if(particles)Instantiate<ParticleSystem>(particles, collision.GetContact(0).point, Quaternion.Euler(collision.GetContact(0).normal)).gameObject.SetActive(true);
         owner.Drop();
     }
-    public void ThrowAt(Vector3 pos) {
+    public virtual void ThrowAt(Vector3 pos) {
         held = false;
         transform.LookAt(pos);
-        var rb = GetComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.AddForce(transform.forward * 100 * rb.mass, ForceMode.Impulse);
     }
-    public IEnumerator Lift(Vector3 pos) {
+    virtual public IEnumerator Lift() {
+        Vector3 pos = default;
+        if (Vector3.Distance(transform.position, owner.transform.position) > 10f) {
+            pos = owner.transform.position + (transform.position - owner.transform.position).normalized * 10f;
+        }
+        else {
+            pos = transform.position;
+        }
+        pos += (Vector3.up * owner.GetComponent<CharacterController>().height * 3);
         held = true;
         while (Vector3.Distance(transform.position, pos) > 0.25 && held) {
-            transform.position = Vector3.Slerp(transform.position, pos, Time.deltaTime * 3f);
+            transform.position = Vector3.Slerp(transform.position, pos, Time.deltaTime * Speed);
             yield return null;
         }
         held = false;

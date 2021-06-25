@@ -3,31 +3,42 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class CutScene : MonoBehaviour
 {
     public PlayableDirector director;
-    public CutScene Next;
-    public bool Last = false;
+    public CutScene NextScene;
+    public Image SkipButton;
     private void Awake() {
         director.stopped += ((director) => {
-            if (Last) {
-                LoadScene(SceneName.City);
-            }
-            else {
-                Next.gameObject.SetActive(true);
-            }
-            gameObject.SetActive(false);
+            Next();
         });
+        SkipButton.GetComponent<Button>().onClick.AddListener(Next);
     }
-    public void LoadScene(SceneName name) {
-        SceneManager.LoadSceneAsync((int)name);
+    private void Start() {
+        StartCoroutine(Skip());
     }
-}
-public enum SceneName {
-    Splash,
-    Menu,
-    Forest,
-    City,
-    Village
+    IEnumerator Skip() {
+        SkipButton.fillAmount = 0f;
+        SkipButton.GetComponent<Button>().interactable = false;
+        yield return new WaitForSeconds(3f);
+        while (SkipButton.fillAmount < 1) {
+            SkipButton.fillAmount += 0.05f;
+            yield return new WaitForSeconds(0.05f);
+        }
+        SkipButton.GetComponent<Button>().interactable = true;
+    }
+    public void Next() {
+        if (NextScene) {
+            NextScene.gameObject.SetActive(true);
+        }
+        else {
+            Game.Inst._Scene = SceneName.Forest;
+            Game.Inst._Stage = Stage.MeetUp;
+            Game.Save();
+            SceneManager.LoadSceneAsync(Game.Inst._Scene.ToString());
+        }
+        gameObject.SetActive(false);
+    }
 }

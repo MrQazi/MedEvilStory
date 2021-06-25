@@ -1,0 +1,8 @@
+6. Aidan in his house in front of the exit door and a large bag on his back. His parents cry in front of him, he bows his head, turns around, and sets off. From here the game becomes more active. 
+
+Environment:
+	City
+Characters:
+	Aiden
+	Mother
+	Father
